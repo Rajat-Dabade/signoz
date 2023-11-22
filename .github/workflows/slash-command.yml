@@ -1,0 +1,33 @@
+name: Update and Rebase Branch
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  update-rebase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check if Comment Contains Command
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const command = '/update-branch';
+            if (context.payload.comment.body.includes(command)) {
+              console.log(`::set-output name=run::true`);
+            } else {
+              console.log(`::set-output name=run::false`);
+            }
+
+      - name: Checkout Repository
+        if: steps.check.outputs.run == 'true'
+        uses: actions/checkout@v2
+
+      - name: Update and Rebase
+        if: steps.check.outputs.run == 'true'
+        run: |
+          git fetch origin develop
+          git rebase origin/develop
+          git push origin HEAD
